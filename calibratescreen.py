@@ -27,9 +27,10 @@ class colorBars(object):
         self.bitwidth = 7
         self.w = tk.Canvas(root, width=width, height=height, bg="black")
         self.w.bind("<Configure>",self.redraw)
-        self.w.grid(row=0, column=0, sticky='nesw')
-        tk.Grid.rowconfigure(root,0,weight=1)
-        tk.Grid.columnconfigure(root,0,weight=1)
+        self.w.grid(row=0, column=1, sticky='nesw')
+        for r in range(4):
+            tk.Grid.rowconfigure(root,r,weight=1)
+        tk.Grid.columnconfigure(root,1,weight=1)
     def num2col(self, level, color):
         """ returns clean color of given level in form #xxxxxx """
         cval = hex(level).split("x")[1]
@@ -54,6 +55,7 @@ class colorBars(object):
     def drawBars(self):
         """ draws 4 stripes RGB and black from zero to max saturation """
         colors = [ 'red', 'green', 'blue', 'grey' ]
+        self.w.grid(rowspan=4,row=0, column=1, sticky='nesw')
         for col in range(256)[::self.bitwidth]:
             for color in colors:
                 self.w.create_rectangle(self.scale(col,"w"),\
@@ -68,12 +70,32 @@ class colorBars(object):
         self.width = event.width
         self.height = event.height
         self.drawBars()
-        tk.Event
+
+class modButtons(object):
+    def __init__(self, root):
+        rbutmin = tk.Button(root, text = "-")
+        rbutmin.grid(column=0, row=0, sticky="nwse")
+        rbutplus = tk.Button(root, text = "+")
+        rbutplus.grid(column=2, row=0, sticky="nesw")
+        gbutmin = tk.Button(root, text = "-")
+        gbutmin.grid(column=0, row=1, sticky="nesw")
+        gbutplus = tk.Button(root, text = "+")
+        gbutplus.grid(column=2, row=1, sticky="nesw")
+        bbutmin = tk.Button(root, text = "-")
+        bbutmin.grid(column=0, row=2, sticky="nesw")
+        bbutplus = tk.Button(root, text = "+")
+        bbutplus.grid(column=2, row=2, sticky="nesw")
+        cbutmin = tk.Button(root, text = "-")
+        cbutmin.grid(column=0, row=3, sticky="nesw")
+        cbutplus = tk.Button(root, text = "+")
+        cbutplus.grid(column=2, row=3, sticky="nesw")
+
 
 
 root = tk.Tk()
 app = mainFrame(root)
 cb = colorBars(app.f,400,100)
 cb.drawBars()
+butt = modButtons(app.f)
 root.mainloop()
 
