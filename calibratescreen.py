@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Calibrate your screen gamma and contrast
 with this easy tool, which controls xgamma
