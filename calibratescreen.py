@@ -7,6 +7,7 @@ author: Petr Studeny
 version: 0.1
 """
 import Tkinter as tk
+import subprocess as subp
 
 class mainFrame(object):
     def __init__(self, root, title= "color bars"):
@@ -19,6 +20,12 @@ class mainFrame(object):
        # self.c.grid(row=0, column=0, sticky='nesw')
        # tk.Grid.rowconfigure(self.f,0,weight=1)
        # tk.Grid.columnconfigure(self.f,0,weight=1)
+
+class dashBoard(object):
+    def __init__(self, root):
+        w = tk.Label(root,text="Set gamma for your monitor using xgamma")
+        w.grid(row=0, column=0, columnspan=3, sticky="nwse")
+
 
 class colorBars(object):
     def __init__(self, root, width, height):
@@ -56,7 +63,7 @@ class colorBars(object):
     def drawBars(self):
         """ draws 4 stripes RGB and black from zero to max saturation """
         colors = [ 'red', 'green', 'blue', 'grey' ]
-        self.w.grid(rowspan=4,row=0, column=1, sticky='nesw')
+        self.w.grid(rowspan=4,row=1, column=1, sticky='nesw')
         for col in range(256)[::self.bitwidth]:
             for color in colors:
                 self.w.create_rectangle(self.scale(col,"w"),\
@@ -74,27 +81,72 @@ class colorBars(object):
 
 class modButtons(object):
     def __init__(self, root):
-        rbutmin = tk.Button(root, text = "-")
-        rbutmin.grid(column=0, row=0, sticky="nwse")
-        rbutplus = tk.Button(root, text = "+")
-        rbutplus.grid(column=2, row=0, sticky="nesw")
-        gbutmin = tk.Button(root, text = "-")
-        gbutmin.grid(column=0, row=1, sticky="nesw")
-        gbutplus = tk.Button(root, text = "+")
-        gbutplus.grid(column=2, row=1, sticky="nesw")
-        bbutmin = tk.Button(root, text = "-")
-        bbutmin.grid(column=0, row=2, sticky="nesw")
-        bbutplus = tk.Button(root, text = "+")
-        bbutplus.grid(column=2, row=2, sticky="nesw")
-        cbutmin = tk.Button(root, text = "-")
-        cbutmin.grid(column=0, row=3, sticky="nesw")
-        cbutplus = tk.Button(root, text = "+")
-        cbutplus.grid(column=2, row=3, sticky="nesw")
+        rbutmin =   tk.Button(root, text = "-", command=self.rmin)
+        rbutmin.grid(column=0, row=1, sticky="nwse")
+        rbutplus =  tk.Button(root, text = "+", command=self.rplus)
+        rbutplus.grid(column=2, row=1, sticky="nesw")
+        gbutmin =   tk.Button(root, text = "-", command=self.gmin)
+        gbutmin.grid(column=0, row=2, sticky="nesw")
+        gbutplus =  tk.Button(root, text = "+", command=self.gplus)
+        gbutplus.grid(column=2, row=2, sticky="nesw")
+        bbutmin =   tk.Button(root, text = "-", command=self.bmin)
+        bbutmin.grid(column=0, row=3, sticky="nesw")
+        bbutplus =  tk.Button(root, text = "+", command=self.bplus)
+        bbutplus.grid(column=2, row=3, sticky="nesw")
+        cbutmin =   tk.Button(root, text = "-", command=self.cmin)
+        cbutmin.grid(column=0, row=4, sticky="nesw")
+        cbutplus =  tk.Button(root, text = "+", command=self.cplus)
+        cbutplus.grid(column=2, row=4, sticky="nesw")
+
+    def rmin(self):
+        self.changegamma('r','-')
+    def rplus(self):
+        self.changegamma('r','+')
+    def gmin(self):
+        self.changegamma('g','-')
+    def gplus(self):
+        self.changegamma('g','+')
+    def bmin(self):
+        self.changegamma('b','-')
+    def bplus(self):
+        self.changegamma('b','+')
+    def cmin(self):
+        self.changegamma('c','-')
+    def cplus(self):
+        self.changegamma('c','+')
+
+    def changegamma(self,color,plusmin):
+        step = 0.1
+        oldgamma = self.getgamma()
+        if not color == 'c':
+            newgamma = oldgamma[color]+step if plusmin == '+' else oldgamma[color]-step
+            cmdline = 'xgamma -'+color+'gamma '+str(newgamma)
+            subp.Popen(cmdline.split()).communicate()
+        else:
+            print 'not implemented'
+
+    def getgamma(self):
+        proc = subp.Popen(['xgamma'], stderr=subp.PIPE)
+        (out, err) = proc.communicate()
+#-> Red  1.000, Green  1.000, Blue  1.000
+        gamma = []
+        err = err.strip()
+        for bit in err.split(','):
+            gamma.append(float(bit[-5:]))
+        print gamma
+        gammadict = {
+                'r':gamma[0],
+                'g':gamma[1],
+                'b':gamma[2]
+                }
+        print gammadict
+        return gammadict
 
 
 
 root = tk.Tk()
 app = mainFrame(root)
+label = dashBoard(app.f)
 cb = colorBars(app.f,400,100)
 cb.drawBars()
 butt = modButtons(app.f)
