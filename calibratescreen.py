@@ -7,7 +7,9 @@ author: Petr Studeny
 version: 0.1
 """
 import Tkinter as tk
+import ttk
 import subprocess as subp
+from pyxrandr import pyxrandr
 
 class mainFrame(object):
     def __init__(self, root, title= "color bars"):
@@ -23,8 +25,29 @@ class mainFrame(object):
 
 class dashBoard(object):
     def __init__(self, root):
-        w = tk.Label(root,text="Set gamma for your monitor using xgamma")
-        w.grid(row=0, column=0, columnspan=3, sticky="nwse")
+        board = tk.Frame(root)
+        board.grid(row=0, column=0, columnspan=3, sticky="nwse")
+        tk.Grid.rowconfigure(board,0,weight=1)
+        tk.Grid.columnconfigure(board,0,weight=1)
+
+        label = tk.Label(board,text="Set gamma for your monitor using xgamma or xrandr")
+        label.grid(row=0, column=0, columnspan=3, sticky="nwse")
+        xrandr = pyxrandr()
+        self.devs = ttk.Combobox(board, state = 'disable')
+        self.devs['values'] = xrandr.getConnectedDevices()
+        self.devs.set( xrandr.getConnectedDevices()[0] )
+        self.devs.grid(row=1, column=0, sticky="nws")
+        self.method = tk.StringVar()
+        self.method.set('xgamma')
+        metxrandr = tk.Radiobutton(board,text='xrandr', variable = self.method, value = 'xrandr', command=self.togglemethod)
+        metxgamma = tk.Radiobutton(board,text='xgamma', variable = self.method, value = 'xgamma', command=self.togglemethod)
+        metxrandr.grid(row=1, column=1, sticky="nse")
+        metxgamma.grid(row=1, column=2, sticky="nse")
+    def togglemethod(self):
+        if self.method.get() == 'xrandr':
+            self.devs.configure(state='readonly')
+        else:
+            self.devs.configure(state='disable')
 
 
 class colorBars(object):
@@ -36,7 +59,7 @@ class colorBars(object):
         self.w = tk.Canvas(root, width=width, height=height, bg="black")
         self.w.bind("<Configure>",self.redraw)
         self.w.grid(row=0, column=1, sticky='nesw')
-        for r in range(4):
+        for r in range(5):
             tk.Grid.rowconfigure(root,r,weight=1)
         tk.Grid.columnconfigure(root,1,weight=1)
     def num2col(self, level, color):
@@ -82,7 +105,7 @@ class colorBars(object):
 class modButtons(object):
     def __init__(self, root):
         rbutmin =   tk.Button(root, text = "-", command=self.rmin)
-        rbutmin.grid(column=0, row=1, sticky="nwse")
+        rbutmin.grid(column=0, row=1, sticky="nesw")
         rbutplus =  tk.Button(root, text = "+", command=self.rplus)
         rbutplus.grid(column=2, row=1, sticky="nesw")
         gbutmin =   tk.Button(root, text = "-", command=self.gmin)
@@ -117,13 +140,18 @@ class modButtons(object):
 
     def changegamma(self,color,plusmin):
         step = 0.1
+        print lableandsetting.devs.get()
         oldgamma = self.getgamma()
         if not color == 'c':
             newgamma = oldgamma[color]+step if plusmin == '+' else oldgamma[color]-step
             cmdline = 'xgamma -'+color+'gamma '+str(newgamma)
             subp.Popen(cmdline.split()).communicate()
         else:
-            print 'not implemented'
+            for citem in oldgamma.keys():
+                newgamma = oldgamma[citem]+step if plusmin == '+' else oldgamma[citem]-step
+                cmdline = 'xgamma -'+citem+'gamma '+str(newgamma)
+                subp.Popen(cmdline.split()).communicate()
+
 
     def getgamma(self):
         proc = subp.Popen(['xgamma'], stderr=subp.PIPE)
@@ -146,7 +174,7 @@ class modButtons(object):
 
 root = tk.Tk()
 app = mainFrame(root)
-label = dashBoard(app.f)
+lableandsetting = dashBoard(app.f)
 cb = colorBars(app.f,400,100)
 cb.drawBars()
 butt = modButtons(app.f)
